@@ -52,37 +52,46 @@ class Parser:
             movie_divs = soup.find_all("div", class_ = "styles_root__ti07r")
 
             for div in movie_divs:
-    
                 movie_data ={}
 
+                #Name
                 movie_data["name"] = div.find("span", class_ = "styles_mainTitle__IFQyZ styles_activeMovieTittle__kJdJj").text
 
+                #Rating
                 rt = div.find_all("div", class_ ="styles_kinopoiskValueBlock__qhRaI")
                 if len(rt)!=0:
                     movie_data["rating"] = float(rt[0].text)
                 else:
                     movie_data["rating"] = "No rating yet"
                 
+                #Year
                 movie_data["year"] = div.find("span", class_ = "desktop-list-main-info_secondaryText__M_aus").text[2:6]
 
-             
+                #Country and Producer
                 country_producer = div.find("span", class_ = "desktop-list-main-info_truncatedText__IMQRP").text
                 movie_data["country"] = country_producer.split("•")[0][:-1]
                 movie_data["producer"] = country_producer.split(":")[-1][1:]
 
+                #Available on kinopoisk
                 a = div.find_all("a", class_ = "style_button__PNtXT style_buttonSize24__efn1J style_buttonPlus__TjQez style_buttonLight____6ma style_withIconLeft___Myt9")
                 if len(a)!=0:
                     movie_data["available on kinopoisk"] = True 
                 else:
                     movie_data["available on kinopoisk"] = False 
-                    
+                
+                #Save movie
                 data[c]=movie_data
                 c+=1
+
+            #Call delay
+            time.sleep(1)
+
         with open("top1000.json", "w", encoding='utf-8') as outfile:
             json.dump(data,outfile,ensure_ascii=False)
 
 
 def main():
+    print("Launched")
     start_time = time.time()
 
     parser = Parser(headless=True)
