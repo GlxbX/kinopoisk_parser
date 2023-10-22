@@ -51,7 +51,7 @@ The Movie Data Parser offers the following functionality:
 5. Run the script with the following command:
 
    ```bash
-   python movie_data_parser.py
+   python main.py
    ```
 
 6. The parsed movie data will be saved to a JSON file named "top1000.json."
