@@ -5,28 +5,23 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
-
-import json 
+import json
 import time
-
 from bs4 import BeautifulSoup as bs
+import concurrent.futures
 
 class Parser:
     def __init__(self, headless=False):
-
-        #options
         options = webdriver.ChromeOptions()
-
         ua = UserAgent()
         user_agent = ua.random
-
         options.add_argument(f"user-agent={user_agent}")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-software-rasterizer")
         options.add_argument("--disable-gpu")
         options.add_argument("--mute-audio")
         options.add_argument("--no-sandbox")
-    
+
         if headless:
             options.add_argument("headless")
 
@@ -34,68 +29,51 @@ class Parser:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
         options.add_experimental_option('useAutomationExtension', False)
-  
-        #driver
+
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-        
-    def parse_top_1000(self):
+    def parse_top_1000(self, page):
         data = {}
         c = 1
-        for page in range(1,21):
-            self.driver.get(f"https://www.kinopoisk.ru/lists/movies/top_1000/?page={page}")
-            WebDriverWait(self.driver, 100,0.5).until(EC.presence_of_element_located((By.CLASS_NAME, "styles_mainTitle__IFQyZ.styles_activeMovieTittle__kJdJj")))
-            
-            source_data = self.driver.page_source
-            soup = bs(source_data, "lxml")
+        self.driver.get(f"https://www.kinopoisk.ru/lists/movies/top_1000/?page={page}")
+        WebDriverWait(self.driver, 100, 0.5).until(EC.presence_of_element_located((By.CLASS_NAME, "styles_mainTitle__IFQyZ.styles_activeMovieTittle__kJdJj")))
 
-            movie_divs = soup.find_all("div", class_ = "styles_root__ti07r")
+        source_data = self.driver.page_source
+        soup = bs(source_data, "lxml")
 
-            for div in movie_divs:
-                movie_data ={}
+        movie_divs = soup.find_all("div", class_="styles_root__ti07r")
 
-                #Name
-                movie_data["name"] = div.find("span", class_ = "styles_mainTitle__IFQyZ styles_activeMovieTittle__kJdJj").text
+        for div in movie_divs:
+            movie_data = {}
+            movie_data["name"] = div.find("span", class_="styles_mainTitle__IFQyZ styles_activeMovieTittle__kJdJj").text
+            rt = div.find_all("div", class_="styles_kinopoiskValueBlock__qhRaI")
+            movie_data["rating"] = float(rt[0].text) if rt else "No rating yet"
+            movie_data["year"] = div.find("span", class_="desktop-list-main-info_secondaryText__M_aus").text[2:6]
+            country_producer = div.find("span", class_="desktop-list-main-info_truncatedText__IMQRP").text
+            movie_data["country"] = country_producer.split("•")[0][:-1]
+            movie_data["producer"] = country_producer.split(":")[-1][1:]
+            a = div.find_all("a", class_="style_button__PNtXT style_buttonSize24__efn1J style_buttonPlus__TjQez style_buttonLight____6ma style_withIconLeft___Myt9")
+            movie_data["available on kinopoisk"] = bool(a)
+            data[c] = movie_data
+            c += 1
 
-                #Rating
-                rt = div.find_all("div", class_ ="styles_kinopoiskValueBlock__qhRaI")
-                if len(rt)!=0:
-                    movie_data["rating"] = float(rt[0].text)
-                else:
-                    movie_data["rating"] = "No rating yet"
-                
-                #Year
-                movie_data["year"] = div.find("span", class_ = "desktop-list-main-info_secondaryText__M_aus").text[2:6]
-
-                #Country and Producer
-                country_producer = div.find("span", class_ = "desktop-list-main-info_truncatedText__IMQRP").text
-                movie_data["country"] = country_producer.split("•")[0][:-1]
-                movie_data["producer"] = country_producer.split(":")[-1][1:]
-
-                #Available on kinopoisk
-                a = div.find_all("a", class_ = "style_button__PNtXT style_buttonSize24__efn1J style_buttonPlus__TjQez style_buttonLight____6ma style_withIconLeft___Myt9")
-                if len(a)!=0:
-                    movie_data["available on kinopoisk"] = True 
-                else:
-                    movie_data["available on kinopoisk"] = False 
-                
-                #Save movie
-                data[c]=movie_data
-                c+=1
-
-            #Call delay
-            time.sleep(1)
-
-        with open("top1000.json", "w", encoding='utf-8') as outfile:
-            json.dump(data,outfile,ensure_ascii=False)
-
+        return data
 
 def main():
     print("Launched")
     start_time = time.time()
-
     parser = Parser(headless=True)
-    parser.parse_top_1000()
+    max_pages = 20
+
+    with concurrent.futures.ThreadPoolExecutor(max_pages) as executor:
+        results = executor.map(parser.parse_top_1000, range(1, max_pages + 1))
+
+    combined_data = {}
+    for data in results:
+        combined_data.update(data)
+
+    with open("top1000.json", "w", encoding='utf-8') as outfile:
+        json.dump(combined_data, outfile, ensure_ascii=False)
 
     print(f"Successfully parsed in {int(time.time()-start_time)} seconds")
 
