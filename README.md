@@ -4,6 +4,9 @@
 
 The Movie Data Parser is a Python script designed to scrape data from Kinopoisk's top 1000 movie list. It uses Selenium and Beautiful Soup for web scraping and allows you to gather information on the top-rated movies, including their name, rating, year of release, country of origin, producer, and availability on Kinopoisk.
 
+## Average Execution Time
+
+The average execution time of the program is approximately 30 seconds.
 
 ## Featuresgit checkout main
 
@@ -13,7 +16,7 @@ The Movie Data Parser offers the following functionality:
 2. Extraction of movie details, including name, rating, year, country, producer, and availability on Kinopoisk.
 3. Utilizes random User-Agent strings for anonymity.
 4. Supports headless mode for running without a visible browser.
-
+5. Multithreaded parsing for improved performance.
 
 ## Technologies
 
