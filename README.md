@@ -8,7 +8,7 @@ The Movie Data Parser is a Python script designed to scrape data from Kinopoisk'
 
 The average execution time of the program is approximately 30 seconds.
 
-## Featuresgit checkout main
+## Features
 
 The Movie Data Parser offers the following functionality:
 
