@@ -8,7 +8,7 @@ from fake_useragent import UserAgent
 import json
 import time
 from bs4 import BeautifulSoup as bs
-import concurrent.futures
+
 
 class Parser:
     def __init__(self, headless=False):
@@ -32,9 +32,11 @@ class Parser:
 
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-    def parse_top_1000(self, page):
+    def parse_page(self, page):
         data = {}
-        c = 1
+     
+        c = 1 + 50*(page-1)
+        
         self.driver.get(f"https://www.kinopoisk.ru/lists/movies/top_1000/?page={page}")
         WebDriverWait(self.driver, 100, 0.5).until(EC.presence_of_element_located((By.CLASS_NAME, "styles_mainTitle__IFQyZ.styles_activeMovieTittle__kJdJj")))
 
@@ -56,25 +58,24 @@ class Parser:
             movie_data["available on kinopoisk"] = bool(a)
             data[c] = movie_data
             c += 1
-
+   
         return data
+
+    def parse_top_1000(self):
+        max_pages = 20
+        data = {}
+        for page in range(1,max_pages+1):
+            data.update(self.parse_page(page))
+        with open("top1000.json", "w", encoding='utf-8') as outfile:
+            json.dump(data, outfile, ensure_ascii=False)
 
 def main():
     print("Launched")
     start_time = time.time()
+
     parser = Parser(headless=True)
-    max_pages = 20
-
-    with concurrent.futures.ThreadPoolExecutor(max_pages) as executor:
-        results = executor.map(parser.parse_top_1000, range(1, max_pages + 1))
-
-    combined_data = {}
-    for data in results:
-        combined_data.update(data)
-
-    with open("top1000.json", "w", encoding='utf-8') as outfile:
-        json.dump(combined_data, outfile, ensure_ascii=False)
-
+    parser.parse_top_1000()
+    
     print(f"Successfully parsed in {int(time.time()-start_time)} seconds")
 
 if __name__ == "__main__":
