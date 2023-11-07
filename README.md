@@ -8,7 +8,7 @@ The Movie Data Parser is a Python script designed to scrape data from Kinopoisk'
 
 The average execution time of the program is approximately 30 seconds.
 
-## Featuresgit checkout main
+## Features
 
 The Movie Data Parser offers the following functionality:
 
@@ -33,13 +33,13 @@ The Movie Data Parser offers the following functionality:
 2. Clone this repository to your local machine:
 
    ```bash
-   git clone https://github.com/your-username/movie-data-parser.git
+   git clone https://github.com/GlxbX/kinopoisk_parser.git
    ```
 
 3. Navigate to the project directory:
 
    ```bash
-   cd movie-data-parser
+   cd kinopoisk_parser
    ```
 
 4. Install the required Python packages:
@@ -51,7 +51,7 @@ The Movie Data Parser offers the following functionality:
 5. Run the script with the following command:
 
    ```bash
-   python movie_data_parser.py
+   python main.py
    ```
 
 6. The parsed movie data will be saved to a JSON file named "top1000.json."
